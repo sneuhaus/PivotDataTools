@@ -2,6 +2,22 @@
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
+
+Hi Steve,
+
+Would the following be possible? --- see getValue() for this
+
+•	Remove trailing spaces from entries
+•	Remove quotes from any column
+•	Ensure that missing data are recorded with either NULL/empty cell or period
+        remove any #'s
+
+
+Thanks!
+
+-Tim-
+
+
  */
 package solidtumortemplateextractor;
 
@@ -24,14 +40,18 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class SolidTumorTemplateExtractor {
 
     static final String NO_VALUE = "NO VALUE";
+    static final String NO_DATE_VALUE = "";//"NO DATE";
+    static final String NPE = "";
 
     static final SimpleDateFormat sdf = new SimpleDateFormat();
     static final String DATE_PATTERN = "MM/dd/yyyy";
-    static Date before, after;
-    static String[] letters = {"A", "B", "C", "D", "E", "F", "G"};
-    static final String BEFORE_DATE = "01/01/2022";
+    static Date BEFORE, AFTER;
+    static String[] LETTERS = {"A", "B", "C", "D", "E", "F", "G"};
+    static final String BEFORE_DATE = "06/06/2022";  // this should be "today" not hardcoded
     static final String AFTER_DATE = "01/01/2015";
+    static final int TIME_POINTS = 25;
     
+    static int offset = 2;
     
     static final String[] columnNames = {"record_id", "record_description", "st_template_version", 
         "st_panel_code", "tumor", "dose", "schedule", "st_passage", "transplant_date", 
@@ -48,12 +68,12 @@ public class SolidTumorTemplateExtractor {
         sdf.applyLocalizedPattern(DATE_PATTERN);
         try {
 
-            before = sdf.parse(BEFORE_DATE);
-            after = sdf.parse(AFTER_DATE);
+            BEFORE = sdf.parse(BEFORE_DATE);
+            AFTER = sdf.parse(AFTER_DATE);
 
-            File myFile = new File("C://1817-Emily");
-  //         File myFile = new File("C://1816/raw");
-
+      
+              File myFile = new File("C://PIVOTData/2001/MDA/");  
+        
     //        System.out.print("File\tSheet\tExp ID\tStudy End Date\tVersion\tTumor\tTreatment and dose\tStart date\tSchedule\tEnd date\tPassage\tTransplant date\tTech\tComments\t");
    //         System.out.println("Timepoint\tDate\tDay\tMouse\tX (mm)\tY (mm)\tWeight\tUnexpected Event\tComment\tEuthanize Code\tEuthanize");
 
@@ -73,11 +93,20 @@ public class SolidTumorTemplateExtractor {
                     for (int s = 0; s < sheets; s++) {
                         Sheet mySheet = myWorkBook.getSheetAt(s);
 
+                         String unexpectedEvent = getValue(mySheet.getRow(0).getCell(11));
+                         if(unexpectedEvent == null || !unexpectedEvent.contains("UNEXPECTED")){
+                             unexpectedEvent = getValue(mySheet.getRow(0).getCell(13));
+                             if(unexpectedEvent != null && unexpectedEvent.contains("UNEXPECTED")){
+                                 offset = 2;
+                             }
+                         }else{
+                             offset = 0;
+                         }
                         //   System.out.println();
                         //    System.out.println("File "+file.getName()+" Sheet "+letters[s]);
-                        String headers = file.getName() + "\t" + "Data-Solid Tumor" + "\t" + getHeaders(mySheet)+"\t"+letters[s]+"\t";
+                        String headers = file.getName() + "\t" + "Data-Solid Tumor" + "\t" + getHeaders(mySheet)+"\t"+LETTERS[s]+"\t";
 
-                        for (int i = 0; i < 25; i++) {
+                        for (int i = 0; i < TIME_POINTS; i++) {
                             int start = 9 + (i * 29);
 
                             String tpd = getTimepointData(mySheet, start, headers);
@@ -98,6 +127,7 @@ public class SolidTumorTemplateExtractor {
         StringBuffer sheetInfo = new StringBuffer(headers);
         StringBuffer timepoints = new StringBuffer();
         Row row = sheet.getRow(start);
+        if(row == null) return "";
         sheetInfo.append(getValue(row.getCell(0)));
         sheetInfo.append("\t").append(getDateValue(row.getCell(2)));  // this is the cut of value for both sheets and timepoints
         row = sheet.getRow(start + 1);
@@ -106,16 +136,35 @@ public class SolidTumorTemplateExtractor {
 
         for (int i = 4; i < 24; i = i + 2) {
             row = sheet.getRow(i + start);
+            if(row == null) return "";
             String mouse = getValue(row.getCell(0));
 
             String x = getValue(row.getCell(1));
             String weight = getValue(row.getCell(7));
             
-            String unexCode = getValue(row.getCell(11));
-            String unexComment = getValue(row.getCell(12));
             
-            String euthCode = getValue(row.getCell(14));
-            String euthComment = getValue(row.getCell(15));
+            
+            // tim would like to extract the numeric code from the code string  (1,2,3)
+            // should be first char, test for numeric
+            String unexCode = getValue(row.getCell(11+offset));
+            if(unexCode != null && !unexCode.isBlank()){
+                try{
+                    
+                    int code = Integer.parseInt(unexCode.trim().charAt(0)+"");
+                    unexCode = code+"";
+                   
+                }catch(Exception e){
+                    // this message will appear in the middle of the output
+                    System.out.println("can't format unexCode "+unexCode+" to integer code in row "+(i+start));
+                }
+            }
+            String unexComment = getValue(row.getCell(12+offset));
+            
+            
+           
+            String euthCode = getValue(row.getCell(14+offset));
+            
+            String euthComment = getValue(row.getCell(15+offset));
            
             
             
@@ -135,6 +184,8 @@ public class SolidTumorTemplateExtractor {
                 timepoints.append("\t").append(dayD.intValue()).append("\t");
                 timepoints.append(mouse).append("\t").append(x).append("\t");
                 timepoints.append(y).append("\t");
+                
+                
                 timepoints.append(unexCode).append("\t").append(unexComment).append("\t");
                 timepoints.append(euthCode).append("\t").append(euthComment).append("\t");
                 timepoints.append(weight).append("\n");
@@ -200,8 +251,15 @@ public class SolidTumorTemplateExtractor {
     }
 
     private static String getValue(Cell cell) {
-        return getValue(cell, cell.getCellType());
+        String val = NPE;
+        try{
+            val = getValue(cell, cell.getCellType());
+        }catch(NullPointerException npe){
+     //       npe.printStackTrace();
+        
+        }
 
+        return val.trim().replace("\"", "").replace("#", "");
     }
 
     private static String getValue(Cell cell, CellType type) {
@@ -222,7 +280,7 @@ public class SolidTumorTemplateExtractor {
     }
 
     private static String getDateValue(Cell cell) {
-        String dateStr = NO_VALUE;
+        String dateStr = NO_DATE_VALUE;
         if (cell == null || CellType.BLANK.equals(cell.getCellType())) {
             return dateStr;
         }
@@ -256,18 +314,22 @@ public class SolidTumorTemplateExtractor {
             if (hasData) {
 
                 String treatment = getTreatment(sheet);
-                //          System.out.println("Treatment for sheet " + letters[i] + " is " + treatment);
+             //             System.out.println("Treatment for sheet " + LETTERS[i] + " is " + treatment);
                 int timepoints = 0;
                 for (int j = 0; j < 25; j++) {
                     int start = 9 + (j * 29);
-                    if (getTimePoint(sheet.getRow(start).getCell(2)) != null) {
-                        timepoints++;
+                    try{
+                        if (getTimePoint(sheet.getRow(start).getCell(2)) != null) {
+                            timepoints++;
+                        }
+                    }catch(Exception e){
+                      //  e.printStackTrace();
                     }
                 }
                 completedSheets++;
-                //           System.out.println("Sheet " + letters[i] + " has " + timepoints + " timepoints");
+         //                  System.out.println("Sheet " + LETTERS[i] + " has " + timepoints + " timepoints");
             } else {
-                //       System.out.println("No data for sheet "+letters[i]);
+        //               System.out.println("No data for sheet "+LETTERS[i]);
             }
         }
 
@@ -281,7 +343,7 @@ public class SolidTumorTemplateExtractor {
 
             try {
                 date = sdf.parse(dateStr);
-                if (!date.after(after) || !date.before(before)) {
+                if (!date.after(AFTER) || !date.before(BEFORE)) {
                     date = null;
                 }
             } catch (Exception e) {
@@ -296,7 +358,7 @@ public class SolidTumorTemplateExtractor {
         String treatmentAndDose = getValue(sheet.getRow(2).getCell(2));
         String comment = getValue(sheet.getRow(7).getCell(2));
 
-        return treatmentAndDose + " " + comment;
+        return treatmentAndDose;// + " " + comment;
     }
 
 }
