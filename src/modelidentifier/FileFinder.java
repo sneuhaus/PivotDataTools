@@ -20,7 +20,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class FileFinder {
     
     static ArrayList<File> files = new ArrayList<>();
-    static File startFile = new File("C://PIVOTData/AllFilesFromRTI/Files/Sarcoma_Renal_Houghton");  
+    static File startFile = new File("C://PIVOTData/");  
     
     public static void main(String[] args){
         
@@ -28,7 +28,7 @@ public class FileFinder {
           getFiles(startFile);
           
         for(File file : files){
-            System.out.println(file.getName());
+            System.out.print(file.getName());
             FileInputStream fis = new FileInputStream(file);
 
             Workbook myWorkBook = new XSSFWorkbook(fis);
@@ -36,12 +36,13 @@ public class FileFinder {
 
             Sheet mySheet = myWorkBook.getSheetAt(0);
             
-            for (int i = 1; i < mySheet.getLastRowNum(); i++) {
-                Row row = mySheet.getRow(i);
-            
-         //       System.out.println("\t"+row.getCell(5).getStringCellValue());
+          
+                Row row = mySheet.getRow(0);
+              for (int i = 1; i < row.getLastCellNum(); i++) {
+               System.out.print("\t"+row.getCell(i).getStringCellValue());
 
             }
+              System.out.println();
         }
       }catch(Exception e ){
           e.printStackTrace();
@@ -54,7 +55,7 @@ public class FileFinder {
                 getFiles(newFile);
             }
         }else{
-            if(file.getName().contains("xlsx")){
+            if(file.getName().contains("xlsx") && file.getName().contains("CCIAE") && !file.getName().contains("Weights")){
                 files.add(file);
             }
         }

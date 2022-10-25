@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import modelidentifier.UTHSCSASubtyper;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
@@ -38,7 +39,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *
  * @author sbn
  */
-public class SolidTumorTemplateExtractor {
+public class SolidTumorTemplateExtractorUTH2001 {
 
     static final String NO_VALUE = "NO VALUE";
     static final String NO_DATE_VALUE = "";//"NO DATE";
@@ -59,7 +60,7 @@ public class SolidTumorTemplateExtractor {
     static final String[] columnNames = {"record_id", "record_description", "st_template_version", 
         "st_panel_code", "tumor", "dose", "schedule", "st_passage", "transplant_date", 
         "treatment_date", "treatment_end_date", "technician", "study_end_date", "group",
-        "dataset", "dataset_date", "day", "mouse", "diameter_x", "diameter_y", 
+        "dataset", "dataset_date", "day", "mouse","subtype","passage", "diameter_x", "diameter_y", 
         "unexpect_event", "event_comment", "reason", "status", "weight",
         "cage_a_wt", "cage_b_wt", "solid_tumor_data_complete", "record_complete", "redcap_event_name"};
 
@@ -109,7 +110,7 @@ public class SolidTumorTemplateExtractor {
                          }
                         //   System.out.println();
                         //    System.out.println("File "+file.getName()+" Sheet "+letters[s]);
-                        String headers = file.getName() + "\t" + "Data-Solid Tumor" + "\t" + getHeaders(mySheet)+"\t"+LETTERS[s]+"\t";
+                        String headers = file.getName() + "\t" + "Data-Solid Tumor" + "\t" + getHeaders(mySheet)+"\t";
 
                         for (int i = 0; i < TIME_POINTS; i++) {
                             int start = 9 + (i * 29);
@@ -144,10 +145,29 @@ public class SolidTumorTemplateExtractor {
             row = sheet.getRow(i + start);
             if(row == null) return "";
             String mouse = getValue(row.getCell(0));
-            
+            String passage ="";
             // code for UTHSCSA 2001
+            mouse = mouse.replace("P","p");
+            mouse = mouse.replace("p"," p");
+            mouse = mouse.replace("  ", " ");
+            String[] parts = mouse.split(" ");
+            if(parts.length == 2){
+                mouse = parts[0];
+                passage = parts[1];
+                       
+            }else if(parts.length == 3){
+            mouse = parts[0]+parts[1];
+            passage = parts[2];
+            }else{
+                mouse = parts[0];
+            }
             
+            if("NCH-51374".equals(mouse)){
+                mouse = "NCH-S13-7484";
+            }
 
+            String subtype = UTHSCSASubtyper.getSubtype(mouse);
+            
             String x = getValue(row.getCell(1));
             String weight = getValue(row.getCell(7));
             
@@ -197,7 +217,11 @@ public class SolidTumorTemplateExtractor {
                 //        System.out.print(sb.toString());
                 timepoints.append(sheetInfo);
                 timepoints.append("\t").append(dayD.intValue()).append("\t");
-                timepoints.append(mouse).append("\t").append(x).append("\t");
+                timepoints.append(mouse).append("\t");
+                timepoints.append(subtype).append("\t");
+                timepoints.append(passage).append("\t");
+                
+                timepoints.append(x).append("\t");
                 timepoints.append(y).append("\t");
                 
                 
@@ -256,7 +280,13 @@ public class SolidTumorTemplateExtractor {
         headers.append(treatmentStartDate).append("\t");
         headers.append(treatmentEndDate).append("\t");
         headers.append(tech).append("\t");
-        headers.append(studyEndDate);
+        headers.append(studyEndDate).append("\t");
+        if("Control".equals(treatmentAndDose)){
+            headers.append("A");
+        }else{
+            headers.append("B");
+        
+        }
       
         
         

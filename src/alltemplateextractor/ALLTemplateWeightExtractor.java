@@ -66,7 +66,7 @@ public class ALLTemplateWeightExtractor {
             BEFORE = sdfOut.parse(BEFORE_DATE);
             AFTER = sdfOut.parse(AFTER_DATE);
 
-            File myFile = new File("C://PIVOTData/1812/CCIA");
+            File myFile = new File("C://PIVOTData/2005/CCIA");
             //         File myFile = new File("C://1816/raw");
 
             for (String column : columnNames) {

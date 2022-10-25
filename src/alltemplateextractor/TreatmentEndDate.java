@@ -8,7 +8,7 @@ package alltemplateextractor;
 import java.io.File;
 import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import org.apache.poi.ss.usermodel.Cell;
@@ -24,7 +24,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * Need to go over all dates and check they are sequential and at roughly the same intervals
  * save them and cross check with what gets written out. ?reading the same date cell at different times seems to have different results?
  */
-public class ALLTemplateExtractor {
+public class TreatmentEndDate {
 
     static final String NO_VALUE = "";
 
@@ -36,7 +36,7 @@ public class ALLTemplateExtractor {
     
     static Date BEFORE, AFTER;
 
-   
+    static final String BEFORE_DATE = "01/01/2022";
     static final String AFTER_DATE = "01/01/2015";
 
     static final String NULL_CELL = "null cell";
@@ -51,51 +51,94 @@ public class ALLTemplateExtractor {
     static String fileName ="";
     static HashMap<String,String> fileColumns = new HashMap<>();
     static HashMap<String,String> fileMiceRows = new HashMap<>();
+    
+    static ArrayList<File> cciaFiles = new ArrayList<>();
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+         StringBuffer good = new StringBuffer();
 
         sdfIn.applyLocalizedPattern(INPUT_DATE_PATTERN);
         sdfOut.applyLocalizedPattern(OUTPUT_DATE_PATTERN);
         try {
 
-            BEFORE = Calendar.getInstance().getTime();
+            BEFORE = sdfOut.parse(BEFORE_DATE);
             AFTER = sdfOut.parse(AFTER_DATE);
 
-            File myFile = new File("C://PIVOTData/2002/CCIA");
-            //         File myFile = new File("C://1816/raw");
+            File myFile = new File("C://PIVOTData/");
+           
+            getCCIAFiles(myFile);
 
-            for (String column : columnNames) {
-                System.out.print(column + "\t");
+            for (File file : cciaFiles) {
+                System.out.println(file.getAbsolutePath());
             }
-            System.out.println();
-
-            for (File file : myFile.listFiles()) {
-                if (file.getName().contains(".xlsx")) {
+            System.out.println("Found "+cciaFiles.size()+" CCIA files");
+          System.exit(0);
+            for (File file : cciaFiles) {
+               
 
                     FileInputStream fis = new FileInputStream(file);
                     fileName  = file.getName();
 
                     Workbook workBook = new XSSFWorkbook(fis);
-                    //        System.out.println("Stats for file " + file.getName());
+                    Sheet sheet = workBook.getSheetAt(0);
+        
+                    String label = getValue(sheet.getRow(5).getCell(0));
+                    String date = getDateValue(sheet.getRow(5).getCell(1));
+                    if(!label.contains("comple") || date.trim().length()==0){
+                        System.out.println(file.getAbsolutePath()+"\tCD45\t"+label+date);
+                    }else{
+                        good.append("\n"+file.getAbsolutePath()+"\tCD45\t"+label+date);
+                    }
+                    
+                    
+                    // for weights
+                    
+                     sheet = workBook.getSheetAt(1);
+        
+                    label = getValue(sheet.getRow(5).getCell(0));
+                    date = getDateValue(sheet.getRow(5).getCell(1));
+                    if(!label.contains("comple") || date.trim().length()==0){
+                        System.out.println(file.getAbsolutePath()+"\tweight\t"+label+date);
+                    }else{
+                        good.append("\n"+file.getAbsolutePath()+"\tweight\t"+label+date);
+                    }
 
-                    getWorkBookData(workBook);
-
-
-                }
+                
             }
         } catch (Exception e) {
+            System.out.println(fileName);
             e.printStackTrace();
         }
         
-        for(String file : fileColumns.keySet()){
-            System.out.println(file+" has "+fileColumns.get(file)+" columns and "+fileMiceRows.get(file)+" mice rows.");
-        }
+        System.out.println(good.toString());
         
     }
 
+    
+   private static void getCCIAFiles(File start){
+ //      System.out.println(start.getAbsolutePath());
+       if(start.isDirectory()){
+           if(start.getName().contains("CCIA")){
+               for(File file : start.listFiles()){
+               //    if(file.getName().contains("xlsx") && !file.getName().contains("Tox")){
+                 if(file.isDirectory() && file.getName().contains("extracted")){
+                     for(File efile : file.listFiles()){
+                        cciaFiles.add(efile);
+                     }
+                   }
+               }
+           }else{
+               for(File file : start.listFiles()){
+                
+                getCCIAFiles(file);
+               }
+           }
+           
+       }
+   }
    
 
     private static String getValue(Cell cell) {
@@ -124,7 +167,7 @@ public class ALLTemplateExtractor {
     }
 
     private static String getDateValue(Cell cell) {
-        String dateStr = NO_VALUE;
+        String dateStr = getValue(cell);
         if (cell == null || CellType.BLANK.equals(cell.getCellType())) {
             return dateStr;
         }

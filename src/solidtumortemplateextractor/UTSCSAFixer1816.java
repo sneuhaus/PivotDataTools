@@ -28,7 +28,7 @@ import java.util.Scanner;
  *
  * @author sbn
  */
-public class UTSCSAFixer {
+public class UTSCSAFixer1816 {
 
    
     
