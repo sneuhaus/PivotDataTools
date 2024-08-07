@@ -15,10 +15,10 @@ public class EventProcessor {
     
     // column indexes
     final static int RECORD_ID  = 0;
-    final static int GROUP = 13;
-    final static int MOUSE = 17;
-    final static int U_EVENT = 20;
-    final static int COMMENT = 21;
+    final static int GROUP = 11;
+    final static int MOUSE = 15;
+    final static int U_EVENT = 21;
+    final static int COMMENT = 22;
  
     public static void main(String[] args){
         
@@ -39,16 +39,17 @@ public class EventProcessor {
         System.out.println("Comment:"+columns[COMMENT]);
         
         // column headers
-        result.append(lines[0]);
+        result.append(lines[0]).append("\n");
         
         // find event codes;
         for(int i = 1; i < lines.length; i++){
-            
+       
             String[] values = lines[i].split("\t");
             if(values[U_EVENT].trim().length() > 0){
                 String key = values[RECORD_ID]+values[GROUP]+values[MOUSE];
                 String value = values[U_EVENT]+"\t"+values[COMMENT];
                 eventMap.put(key,value);
+                System.out.println(key+" "+value);
             }
         }
         
@@ -65,7 +66,13 @@ public class EventProcessor {
                 String[] event = eventMap.get(key).split("\t");
             
                 values[U_EVENT] = event[0];
-                values[COMMENT] = event[1];
+                try{
+                    values[COMMENT] = event[1];
+                }catch(Exception e){
+                    System.out.println("no comment for key "+key +" with event "+eventMap.get(key));
+                    values[COMMENT] ="";
+                }
+                
             }
             result.append(String.join("\t", values)).append("\n");
         }

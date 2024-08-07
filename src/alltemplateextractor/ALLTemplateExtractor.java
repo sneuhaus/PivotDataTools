@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import modelidentifier.IDChecker;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -21,8 +22,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 /**
  *
  * @author sbn
- * Need to go over all dates and check they are sequential and at roughly the same intervals
- * save them and cross check with what gets written out. ?reading the same date cell at different times seems to have different results?
  */
 public class ALLTemplateExtractor {
 
@@ -41,7 +40,7 @@ public class ALLTemplateExtractor {
 
     static final String NULL_CELL = "null cell";
 
-    static final String[] columnNames = {"record_id", "record_description", "panel_code","tumor","tumor_category",
+    static final String[] columnNames = {"record_id", "record_description", "panel_code","model","subtype",
         "testing", "all_dose", "all_schedule", "date_of_innoculation", "date_of_first_treatment",
         "date_of_treatment_completion", "date_of_randomization", "description", 
         "day_0", "arm", "arm_testing", "all_mouse", "date_of_bleed", 
@@ -64,7 +63,7 @@ public class ALLTemplateExtractor {
             BEFORE = Calendar.getInstance().getTime();
             AFTER = sdfOut.parse(AFTER_DATE);
 
-            File myFile = new File("C://PIVOTData/2002/CCIA");
+            File myFile = new File("C://PIVOTData/1704/CCIA/");
             //         File myFile = new File("C://1816/raw");
 
             for (String column : columnNames) {
@@ -152,11 +151,11 @@ public class ALLTemplateExtractor {
         String panelCode = getValue(sheet.getRow(0).getCell(1));
         String testing = getValue(sheet.getRow(1).getCell(1));
         String model = getValue(sheet.getRow(2).getCell(1));
-        String subType = TumorToSubtype.getSubType(model);
+        String subType = IDChecker.getSubtype(model);
         String inoculationDate = getDateValue(sheet.getRow(3).getCell(1));
         String firstTreatmentDate = getDateValue(sheet.getRow(4).getCell(1));
         String treatmentCompletion = getDateValue(sheet.getRow(5).getCell(1));
-        String dayZero = getValue(sheet.getRow(5).getCell(4));
+        String dayZero = getValue(sheet.getRow(8).getCell(4));
         String randomizationDate = getDateValue(sheet.getRow(6).getCell(1));
         
         
@@ -164,11 +163,11 @@ public class ALLTemplateExtractor {
         String deathDate = "";
         int endColumn = 3;
         while(!"Death Date".equals(deathDate)){
-            deathDate = getValue(sheet.getRow(7).getCell(endColumn++));
+            deathDate = getValue(sheet.getRow(11).getCell(endColumn++));
             
         }
         fileColumns.put(fileName,endColumn+"");
-        int miceRows = 9;
+        int miceRows = 13;
         String treatment = getValue(sheet.getRow(miceRows++).getCell(0));
         if(treatment.toLowerCase().startsWith(("control"))){
             while(! treatment.toLowerCase().startsWith("treatment")){
@@ -178,11 +177,12 @@ public class ALLTemplateExtractor {
             System.out.println("Header is not in normal format Control(A) is not on row 10");
         }
     
-        miceRows = miceRows -10;
+        miceRows = 11;
         // verify
-        for(int i = 9; i < 80; i = i + miceRows){
-            if(! treatment.toLowerCase().startsWith("treatment")){
-                System.out.println("inconsistant mice rows expecting treatment at row");
+        for(int i = 13; i < 80; i = i + miceRows){
+            treatment = getValue(sheet.getRow(i).getCell(0));
+            if(!treatment.toLowerCase().startsWith("treatment") || !treatment.toLowerCase().startsWith("control")){
+          //      System.out.println("inconsistant mice rows expecting treatment at row "+i+" found "+treatment);
             }
         }
         fileMiceRows.put(fileName,miceRows+"");
@@ -198,7 +198,7 @@ public class ALLTemplateExtractor {
             // 11 here and 12 on line 188 are related and should be able to be calculated by 
             // inspecting the format of the spreadsheet
             // they vary across studies
-            int row = 9 + (index * miceRows);
+            int row = 13 + (index * miceRows);
 
             String armTesting = getValue(sheet.getRow(row).getCell(1));
             if (!NULL_CELL.equals(armTesting) && !armTesting.isBlank()) {
@@ -206,7 +206,8 @@ public class ALLTemplateExtractor {
                 try{
                     arm = arm.split("\\(")[1].replace(")","");
                 }catch(Exception e){
-                    System.out.println("can't fix treatment arm to single letter group for "+arm);
+                    System.out.println("can't fix treatment arm to single letter group for "+arm+" at row "+row+ " in file "+fileName);
+                    
                 }
                 
                 String dose = getValue(sheet.getRow(row + 1).getCell(1));
@@ -231,7 +232,7 @@ public class ALLTemplateExtractor {
                         loop:
                        
                         for (int i = 3; i < endColumn-3; i++) {
-                            bleedDate = getDateValue(sheet.getRow(7).getCell(i));
+                            bleedDate = getDateValue(sheet.getRow(11).getCell(i));
                             cd45 = getValue(sheet.getRow(row + mouse).getCell(i));
                             try {
                                 

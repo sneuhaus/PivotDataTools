@@ -60,16 +60,18 @@ public class ModelIdentifier {
                                         while (mySheet.getRow(rowIndex) != null) {
                                             //                   System.out.println(data.getAbsolutePath()+" \t"+mySheet.getRow(rowIndex).getCell(4).getStringCellValue()+" \t"+mySheet.getRow(rowIndex).getCell(17).getStringCellValue());
                                             String model ="";
-                                            if("Lurie".equals(center)){
-                                                model = mySheet.getRow(rowIndex).getCell(6).getStringCellValue();
-                                            }
-                                            else{
-                                                model = mySheet.getRow(rowIndex).getCell(4).getStringCellValue();
-                                            }
-                                            if("UTHSCSA".equals(center)){
-                                         //       model = model.replace(",", " ").split(" ")[0];
-                                            }
-                                            models.put(model,model);
+                                            try{
+                                                if("Lurie".equals(center)){
+                                                    model = mySheet.getRow(rowIndex).getCell(6).getStringCellValue();
+                                                }
+                                                else{
+                                                    model = mySheet.getRow(rowIndex).getCell(4).getStringCellValue();
+                                                }
+                                                if("UTHSCSA".equals(center)){
+                                             //       model = model.replace(",", " ").split(" ")[0];
+                                                }
+                                            }catch(Exception e){}
+                                            models.put(model,data.getName()+" "+model);
                                             rowIndex++;
                                         }
                                         //                System.out.println("found "+rowIndex+" rows and "+models.size()+" total models");

@@ -26,7 +26,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * Initially just for 2008 as this is the only example data set from MSKCC
  * @author sbn
  */
-public class MSKCCExtractor {
+public class MSKCCExtractor2014 {
 
     static final String NO_VALUE = "NO VALUE";
     static final String NO_DATE_VALUE = "";//"NO DATE";
@@ -40,8 +40,9 @@ public class MSKCCExtractor {
     static final String AFTER_DATE = "01/01/2015";
     static final int TIME_POINTS = 25;
     
-    static String treatmentStartDate = "04/01/2023";
-    static String treatmentEndDate = "04/21/2023";
+    // schedule is days 0-28, no actual dates were provided by MSKCC
+    static String treatmentStartDate = "04/01/2024";
+    static String treatmentEndDate = "04/29/2024";
     
     static int offset = 2;
     
@@ -67,7 +68,7 @@ public class MSKCCExtractor {
             AFTER = sdf.parse(AFTER_DATE);
 
       
-              File myFile = new File("C://PIVOTData/2008/MSKCC/");  
+              File myFile = new File("C://PIVOTData/2014/MSKCC/");  
         
    
             for(String column : columnNames){
@@ -87,7 +88,7 @@ public class MSKCCExtractor {
                //             System.out.println("Stats for file " + file.getName());
                //     int sheets = getWorkBookStats(myWorkBook);
                
-                    for (int s = 1; s < 13; s++) {
+                    for (int s = 1; s < 5; s++) {
                         Sheet mySheet = myWorkBook.getSheetAt(s);
 
 
@@ -112,29 +113,29 @@ public class MSKCCExtractor {
         int id = 1;
         for(int treatment = 0; treatment < 2; treatment++){
             for(int mouse = 1; mouse < 4; mouse++){
-                int measurement =4;
+                int measurement =3;
                 String volume = getValue(sheet.getRow(measurement).getCell(mouse+(treatment*3)));
                 while(!volume.isBlank()){
                     String day = ((int) sheet.getRow(measurement).getCell(0).getNumericCellValue())+"";
                     
                    
                     String group = "A";
-                    String dose= "vehicle";
-                    String schedule = "";
+                    String dose= "D5W";
+                    String schedule = "Q4D x 4 weeks";
                     if(treatment == 1){
                         
                         group = "B";
-                        dose= "AVB-500 20 mg/kg";
-                        schedule = "QD/M-W-F/3weeks";
+                        dose= "Gedatolisib 10 mg/kg";
+                        schedule = "Q4D x 4 weeks";
                         
                     }
-                    String timepoint = "Timepoint "+(measurement -3);
+                    String timepoint = "Timepoint "+(measurement -2);
                     System.out.print(fileName+"-"+model+"-"+id+++"\t");
                     System.out.print("Data-Solid Tumor\tMSKCC");
-                    System.out.print("\tABV-500 (2008)\t");
+                    System.out.print("\tMSKCC 2014\t");
                     System.out.print(dose+"\t"+schedule+"\t\t\t");
                     System.out.print(treatmentStartDate+"\t"+treatmentEndDate+"\t\t\t");
-                    System.out.print(group+"\t"+timepoint+"\t\t"+day+"\t"+group+mouse+"\t");
+                    System.out.print(group+"\t"+timepoint+"\t\t"+day+"\t"+group+mouse+"-"+model.split("-")[2]+"\t");
                     System.out.print(model+"\t"+subtype+"\t\t"+volume+"\t");
                     
                     

@@ -26,6 +26,7 @@ import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import modelidentifier.UTHSCSASubtyper;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -39,7 +40,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *
  * @author sbn
  */
-public class SolidTumorTemplateExtractorUTH2001 {
+public class SolidTumorTemplateExtractorUTH2001and1713 {
 
     static final String NO_VALUE = "NO VALUE";
     static final String NO_DATE_VALUE = "";//"NO DATE";
@@ -57,18 +58,75 @@ public class SolidTumorTemplateExtractorUTH2001 {
     
     static String fileName ="";
     
+    static String tumor="";
+    
     static final String[] columnNames = {"record_id", "record_description", "st_template_version", 
-        "st_panel_code", "tumor", "dose", "schedule", "st_passage", "transplant_date", 
+        "st_panel_code", "dose", "schedule", "st_passage", "transplant_date", 
         "treatment_date", "treatment_end_date", "technician", "study_end_date", "group",
-        "dataset", "dataset_date", "day", "mouse","subtype","passage", "diameter_x", "diameter_y", 
+        "dataset", "dataset_date", "day", "mouse","tumor","subtype","st_passage", "diameter_x", "diameter_y", 
         "unexpect_event", "event_comment", "reason", "status", "weight",
         "cage_a_wt", "cage_b_wt", "solid_tumor_data_complete", "record_complete", "redcap_event_name"};
 
+    static HashMap<String,String> mapper = new HashMap<>();
+    
+    static StringBuilder unknowns = new StringBuilder();
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-       
+        
+        
+    //special code for UTHSCASA 1713
+    
+    
+        mapper.put("RH-30","Rh30");
+        mapper.put("RH_82","Rh82");
+        mapper.put("RH-82","Rh82");
+         mapper.put("RH87","Rh87");
+        mapper.put("SJRHB010927_X1","SJRhB010927");
+        mapper.put("SJRHBO10927_X","SJRhB010927");
+        mapper.put("SjRhB010927","SJRhB010927");
+        mapper.put("SJRHB000026_X1","SjRhB00026x1");
+        mapper.put("SjRhB00026x1","SjRhB00026x1");
+
+     
+        mapper.put("RH-12","Rh12");
+        mapper.put("RH-36","Rh36");
+        mapper.put("RH-85","Rh85");
+        mapper.put("RH73","Rh73");
+        mapper.put("RH-12","Rh12");
+        mapper.put("SKNE","SKNEP1");
+       // mapper.put("IRS-68","IRS68");
+        mapper.put("RH-66","Rh66");
+        mapper.put("RH-84","Rh84");
+        mapper.put("EW-13","EW13");
+        mapper.put("UHS","UHS0589");
+        mapper.put("NCH-S1384","NCH-S13-7484");
+        mapper.put("WT-16","WT16");
+        mapper.put("RH-65","Rh65");
+        mapper.put("RH87","Rh87");
+        mapper.put("KT-13","KT13");
+        mapper.put("WT-10", "WT10");
+        
+        mapper.put("IRS68","IRS-68");
+        
+        //1820
+                 //SJRHB927X
+        mapper.put("SJRHB927X","SJRhB010927");
+        mapper.put("SjRhB00026x1","SJRhB00026x1");
+
+
+        mapper.put("CCA(ARMS)","CCA");
+        mapper.put("SMSCTRCTR", "SMSCTR");
+        mapper.put("SMS", "SMSCTR");
+        mapper.put("JR(UK)","JR-1");
+        mapper.put("ES8", "ES-8");
+        mapper.put("ES4", "ES-4");
+        mapper.put("G401", "G-401");
+        mapper.put("TC71", "TC-71");
+        mapper.put("NCH-S13-7484","NCH-S13_7484");
+
+        
         sdf.applyLocalizedPattern(DATE_PATTERN);
         try {
 
@@ -76,7 +134,7 @@ public class SolidTumorTemplateExtractorUTH2001 {
             AFTER = sdf.parse(AFTER_DATE);
 
       
-              File myFile = new File("C://PIVOTData/2001/UTHSCSA/");  
+              File myFile = new File("C://PIVOTData/1818/UTHSCSA/new");  
         
     //        System.out.print("File\tSheet\tExp ID\tStudy End Date\tVersion\tTumor\tTreatment and dose\tStart date\tSchedule\tEnd date\tPassage\tTransplant date\tTech\tComments\t");
    //         System.out.println("Timepoint\tDate\tDay\tMouse\tX (mm)\tY (mm)\tWeight\tUnexpected Event\tComment\tEuthanize Code\tEuthanize");
@@ -89,6 +147,8 @@ public class SolidTumorTemplateExtractorUTH2001 {
             for (File file : myFile.listFiles()) {
                 if (file.getName().contains(".xlsx")) {
                     fileName = file.getName();
+                    
+                    tumor ="";
 
                     FileInputStream fis = new FileInputStream(file);
                   
@@ -110,7 +170,9 @@ public class SolidTumorTemplateExtractorUTH2001 {
                          }
                         //   System.out.println();
                         //    System.out.println("File "+file.getName()+" Sheet "+letters[s]);
-                        String headers = file.getName() + "\t" + "Data-Solid Tumor" + "\t" + getHeaders(mySheet)+"\t";
+                        String headers = file.getName() + "\t" + "Data-Solid Tumor" + "\t" + getHeaders(mySheet) +LETTERS[s]+"\t" ;
+                        
+                        
 
                         for (int i = 0; i < TIME_POINTS; i++) {
                             int start = 9 + (i * 29);
@@ -128,6 +190,8 @@ public class SolidTumorTemplateExtractorUTH2001 {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        
+        System.out.println(unknowns.toString());
     }
 
     public static String getTimepointData(Sheet sheet, int start, String headers) {
@@ -142,36 +206,73 @@ public class SolidTumorTemplateExtractorUTH2001 {
         String dayStr = getValue(row.getCell(2));
 
         for (int i = 4; i < 24; i = i + 2) {
+            
+     //       String t = getValue(sheet.getRow(1).getCell(2));
+            
             row = sheet.getRow(i + start);
             if(row == null) return "";
             String mouse = getValue(row.getCell(0));
+            
+//            if(t != null && t.trim().length()!=0){
+//                mouse = t;
+//            }
+
+           
+            
             String passage ="";
             // code for UTHSCSA 2001
+            mouse = mouse.replace("-p","p");
             mouse = mouse.replace("P","p");
             mouse = mouse.replace("p"," p");
             mouse = mouse.replace("  ", " ");
             String[] parts = mouse.split(" ");
             if(parts.length == 2){
-                mouse = parts[0];
+                mouse = map(parts[0]);
                 passage = parts[1];
                        
             }else if(parts.length == 3){
-            mouse = parts[0]+parts[1];
+            mouse = map(parts[0])+parts[1];
             passage = parts[2];
             }else{
-                mouse = parts[0];
+                mouse = map(parts[0]);
             }
             
-            if("NCH-51374".equals(mouse)){
-                mouse = "NCH-S13-7484";
+            
+            
+            if(mouse.startsWith("UHS")){
+                mouse = "UHS0589";
+            }
+            
+            if(mouse.equals("0498-FT0921")){
+                mouse = "0498.FT0921 ";
             }
 
-            String subtype = UTHSCSASubtyper.getSubtype(mouse);
+            if(mapper.get(mouse) != null){
+                mouse = mapper.get(mouse);
+            }
             
             String x = getValue(row.getCell(1));
             String weight = getValue(row.getCell(7));
             
+            String localTumor = tumor;
             
+            
+            
+            if(localTumor.equals("0498-FT0921")){
+                localTumor = "0498.FT0921";
+            }
+            
+            if(tumor == null || tumor.trim().length() == 0){
+                localTumor = mouse;
+            }
+            
+            if(mapper.get(localTumor) != null){
+                localTumor = mapper.get(localTumor);
+            }
+            
+            
+             String subtype = UTHSCSASubtyper.getSubtype(localTumor);
+             
             
             // tim would like to extract the numeric code from the code string  (1,2,3)
             // should be first char, test for numeric
@@ -217,9 +318,16 @@ public class SolidTumorTemplateExtractorUTH2001 {
                 //        System.out.print(sb.toString());
                 timepoints.append(sheetInfo);
                 timepoints.append("\t").append(dayD.intValue()).append("\t");
-                timepoints.append(mouse).append("\t");
-                timepoints.append(subtype).append("\t");
-                timepoints.append(passage).append("\t");
+                
+                if(passage.trim().length()>0)
+                    mouse = mouse+"-"+passage;
+                
+               // mouse should include passage?
+               timepoints.append(mouse).append("\t");
+               // model/tumor should not include passsage?
+               timepoints.append(localTumor).append("\t");
+               timepoints.append(subtype).append("\t");
+               timepoints.append(passage).append("\t");
                 
                 timepoints.append(x).append("\t");
                 timepoints.append(y).append("\t");
@@ -228,9 +336,22 @@ public class SolidTumorTemplateExtractorUTH2001 {
                 timepoints.append(unexCode).append("\t").append(unexComment).append("\t");
                 timepoints.append(euthCode).append("\t").append(euthComment).append("\t");
                 timepoints.append(weight).append("\n");
+                
+                
+               if(subtype.startsWith("Unknown")){
+                unknowns.append(localTumor).append("\n");
+             }
+                
             }
         }
         return timepoints.toString();
+    }
+    
+    private static String map(String mouse){
+      //  if(mouse.startsWith("U"))System.out.println("\n\n\n\n"+mouse);
+        if(mapper.containsKey(mouse))
+            return mapper.get(mouse);
+        return mouse;
     }
 
     private static String getHeaders(Sheet sheet) {
@@ -242,7 +363,7 @@ public class SolidTumorTemplateExtractorUTH2001 {
         
         String version = getValue(sheet.getRow(0).getCell(6));
         
-        String tumor = getValue(sheet.getRow(1).getCell(2));
+         tumor = getValue(sheet.getRow(1).getCell(2));
         
     //    String treatmentAndDose = getValue(sheet.getRow(2).getCell(2));
     
@@ -250,10 +371,20 @@ public class SolidTumorTemplateExtractorUTH2001 {
         String treatmentAndDose = getTreatment(sheet);
           
         String treatmentStartDate = getDateValue(sheet.getRow(2).getCell(5));
+        String treatmentEndDate = getDateValue(sheet.getRow(3).getCell(5));
+      
+     // for 1818
+     //   treatmentStartDate = getDateValue(sheet.getRow(9).getCell(2));
+     //   treatmentEndDate = getDateValue(sheet.getRow(96).getCell(2));
       
         String schedule = getValue(sheet.getRow(3).getCell(2));
              
-        String treatmentEndDate = getDateValue(sheet.getRow(3).getCell(5));
+   
+        
+        if(treatmentAndDose != null && treatmentAndDose.contains("Control")){
+            treatmentStartDate = "";
+            treatmentEndDate = "";
+        }
         
         String passage = getValue(sheet.getRow(4).getCell(2));
 
@@ -272,7 +403,6 @@ public class SolidTumorTemplateExtractorUTH2001 {
        
         headers.append(version).append("\t");
         headers.append(panelCode).append("\t");
-        headers.append(tumor).append("\t");
         headers.append(treatmentAndDose).append("\t");
         headers.append(schedule).append("\t");
         headers.append(passage).append("\t");
@@ -281,12 +411,7 @@ public class SolidTumorTemplateExtractorUTH2001 {
         headers.append(treatmentEndDate).append("\t");
         headers.append(tech).append("\t");
         headers.append(studyEndDate).append("\t");
-        if("Control".equals(treatmentAndDose)){
-            headers.append("A");
-        }else{
-            headers.append("B");
         
-        }
       
         
         
@@ -349,13 +474,17 @@ public class SolidTumorTemplateExtractorUTH2001 {
         // how many treatments
         // how many timepoints per treatment
         // how many mice
-        int sheets = 7;
+        int sheets = 5;
         int completedSheets = 0;
 
         for (int i = 0; i < sheets; i++) {
 
             Sheet sheet = workBook.getSheetAt(i);
-            boolean hasData = getTimePoint(sheet.getRow(9).getCell(2)) != null;
+            boolean hasData = false;
+            try{
+                hasData= getTimePoint(sheet.getRow(9).getCell(2)) != null;
+            }catch(Exception e){}
+            
             if (hasData) {
 
                 String treatment = getTreatment(sheet);
@@ -406,4 +535,8 @@ public class SolidTumorTemplateExtractorUTH2001 {
         return treatmentAndDose;// + " " + comment;
     }
 
+    
+
+
+    
 }

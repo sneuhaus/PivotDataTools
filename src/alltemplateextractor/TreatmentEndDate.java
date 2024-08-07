@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import modelidentifier.IDChecker;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -195,7 +196,7 @@ public class TreatmentEndDate {
         String panelCode = getValue(sheet.getRow(0).getCell(1));
         String testing = getValue(sheet.getRow(1).getCell(1));
         String model = getValue(sheet.getRow(2).getCell(1));
-        String subType = TumorToSubtype.getSubType(model);
+        String subType = IDChecker.getSubtype(model);
         String inoculationDate = getDateValue(sheet.getRow(3).getCell(1));
         String firstTreatmentDate = getDateValue(sheet.getRow(4).getCell(1));
         String treatmentCompletion = getDateValue(sheet.getRow(5).getCell(1));

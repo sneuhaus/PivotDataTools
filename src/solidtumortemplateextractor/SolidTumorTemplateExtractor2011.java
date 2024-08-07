@@ -38,7 +38,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *
  * @author sbn
  */
-public class SolidTumorTemplateExtractor {
+public class SolidTumorTemplateExtractor2011 {
 
     static final String NO_VALUE = "NO VALUE";
     static final String NO_DATE_VALUE = "";//"NO DATE";
@@ -78,7 +78,7 @@ public class SolidTumorTemplateExtractor {
             BEFORE = Calendar.getInstance().getTime();
             AFTER = sdf.parse(AFTER_DATE);
 
-            File dataDir = new File("C://PIVOTData/2011/UTHSCSA/");
+            File dataDir = new File("C://PIVOTData/2018/UTHSCSA/");
         //    subtype = "Neuroblastoma";
 
             //        System.out.print("File\tSheet\tExp ID\tStudy End Date\tVersion\tTumor\tTreatment and dose\tStart date\tSchedule\tEnd date\tPassage\tTransplant date\tTech\tComments\t");
@@ -90,6 +90,8 @@ public class SolidTumorTemplateExtractor {
             System.out.println();
             output.append("\n");
 
+               for (File file : dataDir.listFiles()) System.out.println(file.getName());
+            
             for (File file : dataDir.listFiles()) {
                 if (file.getName().contains(".xlsx")) {
                     fileName = file.getName();
@@ -163,7 +165,7 @@ public class SolidTumorTemplateExtractor {
             String x = getValue(row.getCell(1));
             String weight = getValue(row.getCell(7));
             
-            if(weight.isEmpty())weight="N/A";
+            if(weight.isEmpty())weight=" ";
 
             // tim would like to extract the numeric code from the code string  (1,2,3)
             // should be first char, test for numeric

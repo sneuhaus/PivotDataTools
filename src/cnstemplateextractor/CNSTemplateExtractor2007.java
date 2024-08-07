@@ -10,7 +10,6 @@ import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
-import modelidentifier.IDChecker;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -24,9 +23,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  *
  * @author sbn
  */
-public class CNSTemplateExtractor {
-    
-    
+public class CNSTemplateExtractor2007 {
 
     static final String NO_VALUE = "NO VALUE";
 
@@ -34,23 +31,30 @@ public class CNSTemplateExtractor {
     static final String DATE_PATTERN = "MM/dd/yyyy";
     static Date BEFORE, AFTER;
 
-    static final String BEFORE_DATE = "01/01/2022";
+    static final String BEFORE_DATE = "01/01/2025";
     static final String AFTER_DATE = "01/01/2015";
 
     static final String DELIM = "\t";
 
-    static final String[] COLUMN_NAMES = {"CNS panel code", "Mouse #", "Strain", "Sex", "DOB", "Model ID", "passage", "Cell number", "Volume (ul)",
-        "site of injection", "date of injection", "Group", "treatment-drug", "treatment scheme","Treatment Concentration", "date_treatment started",
-        "date_treatment ended", "route of adminstration", "date ended", "outcome", "visible tumor", "Unexpected Event", "survival time (days)", "survival counted", "User"};
+//    static final String[] COLUMN_NAMES = {"CNS panel code", "Mouse #", "Strain", "Sex", "DOB", "Model ID", "passage", "Cell number", "Volume (ul)",
+//        "site of injection", "date of injection", "Group", "treatment-drug", "treatment scheme","Treatment Concentration", "date_treatment started",
+//        "date_treatment ended", "route of adminstration", "date ended", "outcome", "visible tumor", "Unexpected Event", "survival time (days)", "survival counted", "User"};
+    
+    
+    // input file columns
+     static final String[] COLUMN_NAMES = {"CNS panel code", "Mouse #", "Strain", "Sex", "DOB", "Model ID", "passage", "Cell number", "Volume (ul)",
+        "site of injection", "date of injection", "group", "treatment-drug", "treatment scheme", "date_treatment started",
+        "date_treatment ended", "route of adminstration", "date ended", "outcome", "code of survival evaluation", "survival counted", "survival time (days)", "User"};
 
+     // output file columns
     static final String[] HEADER_NAMES = {
         "record_id", "panel_code", "mouse_number", "strain", "sex", "dob",
         "cns_model_id", "passage", "cell_number", "volume", "site_of_injection",
         "date_of_injection", "cns_group", "treatment_drug", "treatment_scheme",
         "treatment_concentration",
         "date_treatment_started", "date_treatment_ended", "route_of_administration",
-        "date_ended", "outcome", "visible_tumor", "unexpected_event",
-        "survival_time_days", "survival_counted", "user", "cns_data_complete",
+        "date_ended", "outcome", "visible_tumor", "unexpected_event","survival code", "survival_counted",
+        "survival_time_days",  "user", "cns_data_complete",
         "record_complete", "redcap_event_name", "survival_24hr"
 
     };
@@ -84,51 +88,53 @@ public class CNSTemplateExtractor {
 
                     Workbook myWorkBook = new XSSFWorkbook(fis);
                     //        System.out.println("Stats for file " + file.getName());
-                    Sheet mySheet = myWorkBook.getSheetAt(1);
+                    Sheet mySheet = myWorkBook.getSheetAt(0);
                     System.out.println(file.getName());
                //     System.out.println(myWorkBook.getSheetName(0));
                     String valid = validateDataSheet(mySheet);
                     valid = "";
-                    
                     loop: if (valid.isBlank()) {
                         for (int i = 1; i < mySheet.getLastRowNum(); i++) {
                             Row row = mySheet.getRow(i);
                             if(row == null || row.getCell(0) == null) break loop;
                             String panelCode = getValue(row.getCell(0));
-                            String mouse = Double.parseDouble(getValue(row.getCell(1)))+"";
+                            String mouse = (getValue(row.getCell(1)))+"";
                             data.append(panelCode).append("-").append(mouse).append(DELIM);
                             data.append(panelCode).append(DELIM);
                             data.append(mouse).append(DELIM);
                             data.append(getValue(row.getCell(2))).append(DELIM);  //strain
                             data.append(getValue(row.getCell(3))).append(DELIM);  // sex
                             data.append(getDateValue(row.getCell(4))).append(DELIM); // dob
-                            String mouseID = IDChecker.checkID(getValue(row.getCell(5)));
-                            
-                            data.append(mouseID).append(DELIM); //model id
+                            data.append(getValue(row.getCell(5))).append(DELIM); //model id
 
                             data.append(getValue(row.getCell(6))).append(DELIM); //passage
                             data.append(getValue(row.getCell(7))).append(DELIM); // cell number
                             data.append(getValue(row.getCell(8))).append(DELIM); //volume
                             data.append(getValue(row.getCell(9))).append(DELIM); //site of injection
 
-                            data.append(getDateValue(row.getCell(10))).append(DELIM); // date of injection
-                            data.append(getValue(row.getCell(11))).append(DELIM); //group
-                            data.append(getValue(row.getCell(12))).append(DELIM); //treatment-drug
+                           data.append(getDateValue(row.getCell(10))).append(DELIM); // date of injection
+                          
+                            data.append(getValue(row.getCell(12))).append(DELIM); //group
+                            //data.append("no group provided").append(DELIM);
+                            data.append(getValue(row.getCell(11))).append(DELIM); //treatment-drug
                             data.append(getValue(row.getCell(13))).append(DELIM); //treatment scheme
 
-                            data.append(getValue(row.getCell(14))).append(DELIM); // treatment concentration
-                            data.append(getDateValue(row.getCell(15))).append(DELIM); //treatment started
-                            data.append(getDateValue(row.getCell(16))).append(DELIM); // treatment ended
-                            data.append(getValue(row.getCell(17))).append(DELIM); // route of admin
+                            //data.append(getValue(row.getCell(14))).append(DELIM); // treatment concentration
+                            data.append("no concentration provided").append(DELIM);
+                            data.append(getDateValue(row.getCell(14))).append(DELIM); //treatment started
+                            data.append(getDateValue(row.getCell(15))).append(DELIM); // treatment ended
+                            data.append(getValue(row.getCell(16))).append(DELIM); // route of admin
 
-                            data.append(getDateValue(row.getCell(18))).append(DELIM); // date ended
-                            data.append(getValue(row.getCell(19))).append(DELIM); // outcome
-                            data.append(getValue(row.getCell(20))).append(DELIM); // tumor visible
-                            data.append(getValue(row.getCell(21))).append(DELIM); // unexpected event
-
-                            data.append(getValue(row.getCell(22))).append(DELIM); // survival time
-                            data.append(getValue(row.getCell(23))).append(DELIM); // survival counted
-                             data.append(getValue(row.getCell(24))).append(DELIM); // user
+                            data.append(getDateValue(row.getCell(17))).append(DELIM); // date ended
+                            data.append(getValue(row.getCell(18))).append(DELIM); // outcome
+                           // data.append(getValue(row.getCell(20))).append(DELIM); // tumor visible
+                            data.append("no tumor visisble value").append(DELIM);
+                             data.append("no unexpected event value").append(DELIM);
+                           // data.append(getValue(row.getCell(20))).append(DELIM); // unexpected event
+                            data.append(getValue(row.getCell(19))).append(DELIM); // survival code
+                            data.append(getValue(row.getCell(20))).append(DELIM); // survival time
+                            data.append(getValue(row.getCell(21))).append(DELIM); // survival counted
+                            data.append(getValue(row.getCell(22))).append(DELIM); // user
 
                             data.append("CNS_DATA COMPLETE").append(DELIM);
                             data.append("RECORD_COMPLETE").append(DELIM);
@@ -136,6 +142,13 @@ public class CNSTemplateExtractor {
                             data.append("SURVIVAL_24HR").append(DELIM);
 
                             data.append("\n");
+                            
+                            
+                            if(!getValue(row.getCell(19)).equals("0.0")){
+            //                    System.out.println(file.getName()+" "+getValue(row.getCell(19))+" "+getValue(row.getCell(20)));
+                            }
+                            
+                            
                         }
 
                     } else {
@@ -161,15 +174,15 @@ public class CNSTemplateExtractor {
     private static String validateDataSheet(Sheet dataSheet) {
         StringBuilder result = new StringBuilder();
         Row firstRow = dataSheet.getRow(0);
-        if (25 == firstRow.getLastCellNum()) {
+        if (23 == firstRow.getLastCellNum()) {
 
         } else {
-            result.append(firstRow.getLastCellNum() + " is not 25 columns\n");
+            result.append(firstRow.getLastCellNum() + " is not 23 columns\n");
         }
         Iterator<Cell> it = firstRow.cellIterator();
 
         for (String column : COLUMN_NAMES) {
-    //        System.out.println(column);
+            System.out.println(column);
             Cell cell = it.next();
             String columnName = cell.getStringCellValue();
             if (!column.equalsIgnoreCase(columnName)) {
@@ -180,15 +193,15 @@ public class CNSTemplateExtractor {
         return result.toString();
     }
 
-    private static String getWeightData(Sheet weightSheet) {
-        return "Weight Data";
-    }
+   
 
     private static String getValue(Cell cell) {
         String value = " ";
         try{
             value = getValue(cell, cell.getCellType());
-        }catch(Exception e){}
+        }catch(Exception e){
+       // e.printStackTrace();
+        }
 
         return value;
     }

@@ -5,7 +5,6 @@
  */
 package alltemplateextractor;
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
@@ -21,13 +20,10 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
- * !!!!!!!!!!!Format Column O/P in excel as 'text' otherwise mouse names become dates!!!!!!!!!!!!!!
- * 
- 
- * 
+ *
  * @author sbn
  */
-public class ALLTemplateWeightExtractorEndDate {
+public class ALLTemplateExtractor2002 {
 
     static final String NO_VALUE = "";
 
@@ -39,32 +35,21 @@ public class ALLTemplateWeightExtractorEndDate {
     
     static Date BEFORE, AFTER;
 
-  
+   
     static final String AFTER_DATE = "01/01/2015";
 
     static final String NULL_CELL = "null cell";
 
-    static final String[] columnNames = {"record_id", "record_description","associated_all_project", "panel_code",
-        "tumor", "tumor_category", "testing", 
-        "all_dose", "all_schedule", "date_of_innoculation", "date_of_first_treatment",
+    static final String[] columnNames = {"record_id", "record_description", "panel_code","model","subtype",
+        "testing", "all_dose", "all_schedule", "date_of_innoculation", "date_of_first_treatment",
         "date_of_treatment_completion", "date_of_randomization", "description", 
-        "day_0", "arm", "arm_testing", "all_mouse", "date_of_weight", 
-        "all_weight", "code", "footnote", "death_date", "n", "summary_thydym", 
+        "day_0", "arm", "arm_testing", "all_mouse", "date_of_bleed", 
+        "cd45", "code", "footnote", "death_date", "n", "summary_thydym", 
         "summary_toxic", "summary_evaluable", "all_data_complete", "redcap_event_name"};
     
     static String fileName ="";
-    
     static HashMap<String,String> fileColumns = new HashMap<>();
     static HashMap<String,String> fileMiceRows = new HashMap<>();
-    
-    static StringBuilder messages = new StringBuilder();
-
-    // end of row with date of weights indicated how many timepoints there are
-  
-    static int endColumn = 3;  // first date of bleeds
-    static int dateOfWeightsRow = 11; // row with date of bleeds
-    static int miceRow = 13;  // first row of repeating mouse data should be "Control(A)"
-
 
     /**
      * @param args the command line arguments
@@ -78,7 +63,7 @@ public class ALLTemplateWeightExtractorEndDate {
             BEFORE = Calendar.getInstance().getTime();
             AFTER = sdfOut.parse(AFTER_DATE);
 
-            File myFile = new File("C://PIVOTData/2002/CCIA");
+            File myFile = new File("C://PIVOTData/2002/CCIA/SMT");
             //         File myFile = new File("C://1816/raw");
 
             for (String column : columnNames) {
@@ -97,19 +82,16 @@ public class ALLTemplateWeightExtractorEndDate {
 
                     getWorkBookData(workBook);
 
-
+                    fis.close();
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         
-        
-         for (String file : fileColumns.keySet()) {
-            messages.append("\n").append(file + " has " + fileColumns.get(file) + " columns and " + fileMiceRows.get(file) + " treatment rows.");
+        for(String file : fileColumns.keySet()){
+            System.out.println(file+" has "+fileColumns.get(file)+" columns and "+fileMiceRows.get(file)+" mice rows.");
         }
-
-        System.out.println(messages.toString());
         
     }
 
@@ -140,7 +122,7 @@ public class ALLTemplateWeightExtractorEndDate {
 
     }
 
-     private static String getDateValue(Cell cell) {
+    private static String getDateValue(Cell cell) {
         String dateStr = NO_VALUE;
         if (cell == null || CellType.BLANK.equals(cell.getCellType())) {
             return dateStr;
@@ -165,61 +147,58 @@ public class ALLTemplateWeightExtractorEndDate {
 
     private static void getWorkBookData(Workbook workBook) {
 
-        Sheet sheet = workBook.getSheetAt(1);
+        Sheet sheet = workBook.getSheetAt(0);
         String panelCode = getValue(sheet.getRow(0).getCell(1));
+        String testing = getValue(sheet.getRow(1).getCell(1));
         String model = getValue(sheet.getRow(2).getCell(1));
         String subType = IDChecker.getSubtype(model);
-        String testing = getValue(sheet.getRow(1).getCell(1));
         String inoculationDate = getDateValue(sheet.getRow(3).getCell(1));
-         String firstTreatmentDateA = getDateValue(sheet.getRow(4).getCell(1));
-        String treatmentCompletionA = getDateValue(sheet.getRow(5).getCell(1));
-        String firstTreatmentDateB = getDateValue(sheet.getRow(6).getCell(1));
-        String treatmentCompletionB = getDateValue(sheet.getRow(7).getCell(1));
-        String firstTreatmentDateC = getDateValue(sheet.getRow(8).getCell(1));
-        String treatmentCompletionC = getDateValue(sheet.getRow(9).getCell(1));
-    //    String dayZero = getValue(sheet.getRow(5).getCell(4));
-        String randomizationDate = getDateValue(sheet.getRow(10).getCell(1));
+        String firstTreatmentDate = getDateValue(sheet.getRow(4).getCell(1));
+        String treatmentCompletion = getDateValue(sheet.getRow(5).getCell(1));
+        String dayZero = getValue(sheet.getRow(8).getCell(4));
+        String randomizationDate = getDateValue(sheet.getRow(6).getCell(1));
         
         
-        
-        String comment = "";
-      
-        while(!"Comment".equals(comment)){
-            comment = getValue(sheet.getRow(dateOfWeightsRow+1).getCell(endColumn++));
+        // find out how many columns by looking for header Death Date
+        String deathDate = "";
+        int endColumn = 3;
+        while(!"Date of Cull".equals(deathDate)){
+            deathDate = getValue(sheet.getRow(7).getCell(endColumn++));
             
         }
         fileColumns.put(fileName,endColumn+"");
-        
-        int treatmentGroupRows= miceRow;
-        String treatment = getValue(sheet.getRow(treatmentGroupRows++).getCell(0));
-        if(treatment.toLowerCase().startsWith(("control"))){
-            while(! treatment.toLowerCase().startsWith("treatment")){
-                treatment = getValue(sheet.getRow(treatmentGroupRows++).getCell(0));
+        int miceRows = 9;
+        String treatment = getValue(sheet.getRow(miceRows++).getCell(0));
+        if(treatment.toLowerCase().startsWith(("treatment"))){
+            while(! treatment.toLowerCase().startsWith("treatment (b)")){
+                treatment = getValue(sheet.getRow(miceRows++).getCell(0));
             }
         }else{
-             messages.append("\n").append(fileName + " Header is not in normal format Control(A) is not on row " + miceRow);
+            System.out.println("Header is not in normal format Control(A) is not on row 10");
         }
     
-        treatmentGroupRows = treatmentGroupRows - miceRow -1; // this is terrible what is happening!
+        miceRows = 30;
         // verify
-        int treatmentGroups = 0;
-        for(int i = miceRow + treatmentGroupRows; i < 80; i = i + treatmentGroupRows){
-             treatment = getValue(sheet.getRow(i).getCell(0));
-            if (!treatment.toLowerCase().startsWith("treatment")) {
-                messages.append("\n").append(fileName + " Inconsistant mice rows expecting treatment at row " + i + " found " + treatment);
-            }
-            if (getValue(sheet.getRow(i).getCell(1)) != null) {
-                treatmentGroups++;
+        for(int i = 9; i < 80; i = i + miceRows){
+            treatment = getValue(sheet.getRow(i).getCell(0));
+            if(!treatment.toLowerCase().startsWith("treatment") || !treatment.toLowerCase().startsWith("control")){
+     //          System.out.println("inconsistant mice rows expecting treatment at row "+i+" found "+treatment);
             }
         }
-        fileMiceRows.put(fileName,treatmentGroups+"");
+        fileMiceRows.put(fileName,miceRows+"");
+        
+        
 
         int rowCount = 1;
         boolean moreTreatments = true;
         int index = 0;
         while (moreTreatments) {
 
-             int row = miceRow + (index * treatmentGroupRows);
+            // 9 should be static as the header fields don't change
+            // 11 here and 12 on line 188 are related and should be able to be calculated by 
+            // inspecting the format of the spreadsheet
+            // they vary across studies
+            int row = 9 + (index * miceRows);
 
             String armTesting = getValue(sheet.getRow(row).getCell(1));
             if (!NULL_CELL.equals(armTesting) && !armTesting.isBlank()) {
@@ -227,79 +206,66 @@ public class ALLTemplateWeightExtractorEndDate {
                 try{
                     arm = arm.split("\\(")[1].replace(")","");
                 }catch(Exception e){
-                     messages.append("\n").append(fileName + " can't fix treatment arm to single letter group for " + arm + " at row " + row);
+                    System.out.println("can't fix treatment arm to single letter group for "+arm+" at row "+row+ " in file "+fileName);
+                    
                 }
-                
-                String firstTreatmentDate = "";
-                String treatmentCompletion = "";
-                if ("A".equals(arm)) {
-                    firstTreatmentDate = firstTreatmentDateA;
-                    treatmentCompletion = treatmentCompletionA;
-                }
-
-                if ("B".equals(arm)) {
-                    firstTreatmentDate = firstTreatmentDateB;
-                    treatmentCompletion = treatmentCompletionB;
-                }
-
-                if ("C".equals(arm)) {
-                    firstTreatmentDate = firstTreatmentDateC;
-                    treatmentCompletion = treatmentCompletionC;
-                }
-                
                 
                 String dose = getValue(sheet.getRow(row + 1).getCell(1));
-                String schedule = getValue(sheet.getRow(row + 2).getCell(1))+" "+ getValue(sheet.getRow(row + 3).getCell(1));
+                String schedule1 = getValue(sheet.getRow(row + 2).getCell(1));
+                String schedule2 = getValue(sheet.getRow(row + 3).getCell(1));
                 String n = getValue(sheet.getRow(row + 4).getCell(1));
                 String thyLym = getValue(sheet.getRow(row + 6).getCell(1));
                 String toxic = getValue(sheet.getRow(row + 7).getCell(1));
                 String evaluable = getValue(sheet.getRow(row + 8).getCell(1));
 
-                 
-                
-                for (int mouse = 0; mouse < treatmentGroupRows; mouse++) {
+                for (int mouse = 0; mouse < miceRows; mouse++) {
 
-                    String weighDate, weight;
-                    String mouseName = getValue(sheet.getRow(row + mouse).getCell(2));
-                    comment = getValue(sheet.getRow(row+mouse).getCell(endColumn-1));
-
-                  
+                    String bleedDate, cd45;
+                    model =  getValue(sheet.getRow(row + mouse).getCell(5));
+                    subType = getValue(sheet.getRow(row+mouse).getCell(2));
+                    firstTreatmentDate = getDateValue(sheet.getRow(row+mouse).getCell(3));
+                    treatmentCompletion = getDateValue(sheet.getRow(row+mouse).getCell(4));
                     
-                    if (mouseName != null && !mouseName.isBlank()) {
+                    String codes = getValue(sheet.getRow(row + mouse).getCell(endColumn - 3));
+                    String footNote = getValue(sheet.getRow(row + mouse).getCell(endColumn - 2));
+                    deathDate = getDateValue(sheet.getRow(row + mouse).getCell(endColumn-1));
+                    
+                    dayZero = getDateValue(sheet.getRow(row + mouse).getCell(3));
+
+                    if (model != null && !model.isBlank()) {
                         loop:
-                        for (int i = 3; i < endColumn; i++) {
-                            weighDate = getDateValue(sheet.getRow(dateOfWeightsRow).getCell(i));
-                            weight = getValue(sheet.getRow(row + mouse).getCell(i));
+                       
+                        for (int i = 7; i < endColumn-3; i++) {
+                            bleedDate = getDateValue(sheet.getRow(7).getCell(i));
+                            cd45 = getValue(sheet.getRow(row + mouse).getCell(i));
                             try {
                                 
                                 StringBuilder dataRow = new StringBuilder();
-                                double weightValue = Double.parseDouble(weight);
+                                double cd45value = Double.parseDouble(cd45);
                 
                                 dataRow.append(fileName+"-"+rowCount++).append("\t");
                                 dataRow.append("Data-ALL").append("\t");
-                                dataRow.append("associated project").append("\t");
                                 dataRow.append(panelCode).append("\t");
                                 dataRow.append(model).append("\t");
                                 dataRow.append(subType).append("\t");
                                 dataRow.append(testing).append("\t");
+                               
                                 dataRow.append(dose).append("\t");
-                                dataRow.append(schedule).append("\t");
+                                dataRow.append(schedule1).append("\t");
                                 dataRow.append(inoculationDate).append("\t");
                                 dataRow.append(firstTreatmentDate).append("\t");
                                 dataRow.append(treatmentCompletion).append("\t");
                                 dataRow.append(randomizationDate).append("\t");
                                 dataRow.append("").append("\t");
-                                dataRow.append("").append("\t");
+                                dataRow.append(dayZero).append("\t");
                                 dataRow.append(arm).append("\t");
                                 dataRow.append(armTesting).append("\t");
-                                dataRow.append(mouseName).append("\t");
-                                dataRow.append(weighDate).append("\t");
-                                dataRow.append(weight).append("\t");
-                                dataRow.append("").append("\t");
-                                dataRow.append(comment).append("\t");
-                                
-                                // not sure these are ever used
-                                dataRow.append("").append("\t");
+                                dataRow.append(model).append("\t");
+                                dataRow.append(bleedDate).append("\t");
+                                dataRow.append(cd45).append("\t");
+                                dataRow.append(codes).append("\t");
+                                dataRow.append(footNote).append("\t");
+                                dataRow.append(deathDate).append("\t");
                                 dataRow.append(n).append("\t");
                                 dataRow.append(thyLym).append("\t");
                                 dataRow.append(toxic).append("\t");
@@ -323,6 +289,7 @@ public class ALLTemplateWeightExtractorEndDate {
 
         }
 
+        
     }
 
 }

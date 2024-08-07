@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import modelidentifier.IDChecker;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -219,7 +220,7 @@ public class ALLTemplateWeightExtractor1811 {
                     String weighDate, weight;
                     
                     model = getValue(sheet.getRow(row+mouse).getCell(3)).trim();
-                    subType = TumorToSubtype.getSubType(model);
+                    subType = IDChecker.getSubtype(model);
                     dayZero = getDateValue(sheet.getRow(row+mouse).getCell(2));
                     
                     String mouseName = getValue(sheet.getRow(row + mouse).getCell(4));

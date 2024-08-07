@@ -34,7 +34,7 @@ public class ALLTemplateExtractor1704 {
     
     static Date BEFORE, AFTER;
 
-    static final String BEFORE_DATE = "01/01/2022";
+    static final String BEFORE_DATE = "01/01/2025";
     static final String AFTER_DATE = "01/01/2015";
 
     static final String NULL_CELL = "null cell";
@@ -130,13 +130,13 @@ public class ALLTemplateExtractor1704 {
             Calendar c = Calendar.getInstance();
             c.setTime(cell.getDateCellValue());
             
-            if(c.before(BEFORE) && c.after(AFTER)){
+       //     if(c.before(BEFORE) && c.after(AFTER)){
 
                 dateStr =  sdfOut.format(cell.getDateCellValue());
                 return dateStr;
-            }else{
-                System.out.println(cell.getDateCellValue()+" is wonky 1");
-            }
+      //      }else{
+      //          System.out.println(cell.getDateCellValue()+" is wonky 1");
+      //      }
         } catch (Exception e) {
         }
         try {

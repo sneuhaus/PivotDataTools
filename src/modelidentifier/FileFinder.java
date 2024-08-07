@@ -55,7 +55,7 @@ public class FileFinder {
                 getFiles(newFile);
             }
         }else{
-            if(file.getName().contains("xlsx") && file.getName().contains("CCIAE") && !file.getName().contains("Weights")){
+            if(file.getName().contains("xlsx") && file.getName().contains("Extracted") && !file.getName().contains("Weight")){
                 files.add(file);
             }
         }

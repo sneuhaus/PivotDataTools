@@ -5,11 +5,9 @@
  */
 package alltemplateextractor;
 
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import modelidentifier.IDChecker;
@@ -27,7 +25,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * 
  * @author sbn
  */
-public class ALLTemplateWeightExtractorEndDate {
+public class ALLTemplateWeightExtractor2002 {
 
     static final String NO_VALUE = "";
 
@@ -39,13 +37,13 @@ public class ALLTemplateWeightExtractorEndDate {
     
     static Date BEFORE, AFTER;
 
-  
+    static final String BEFORE_DATE = "01/01/2025";
     static final String AFTER_DATE = "01/01/2015";
 
     static final String NULL_CELL = "null cell";
 
     static final String[] columnNames = {"record_id", "record_description","associated_all_project", "panel_code",
-        "tumor", "tumor_category", "testing", 
+        "model", "subtype", "testing", 
         "all_dose", "all_schedule", "date_of_innoculation", "date_of_first_treatment",
         "date_of_treatment_completion", "date_of_randomization", "description", 
         "day_0", "arm", "arm_testing", "all_mouse", "date_of_weight", 
@@ -56,15 +54,7 @@ public class ALLTemplateWeightExtractorEndDate {
     
     static HashMap<String,String> fileColumns = new HashMap<>();
     static HashMap<String,String> fileMiceRows = new HashMap<>();
-    
-    static StringBuilder messages = new StringBuilder();
-
-    // end of row with date of weights indicated how many timepoints there are
-  
-    static int endColumn = 3;  // first date of bleeds
-    static int dateOfWeightsRow = 11; // row with date of bleeds
-    static int miceRow = 13;  // first row of repeating mouse data should be "Control(A)"
-
+   
 
     /**
      * @param args the command line arguments
@@ -75,10 +65,10 @@ public class ALLTemplateWeightExtractorEndDate {
         sdfOut.applyLocalizedPattern(OUTPUT_DATE_PATTERN);
         try {
 
-            BEFORE = Calendar.getInstance().getTime();
+            BEFORE = sdfOut.parse(BEFORE_DATE);
             AFTER = sdfOut.parse(AFTER_DATE);
 
-            File myFile = new File("C://PIVOTData/2002/CCIA");
+            File myFile = new File("C://PIVOTData/2002/CCIA/SMT/");
             //         File myFile = new File("C://1816/raw");
 
             for (String column : columnNames) {
@@ -103,14 +93,6 @@ public class ALLTemplateWeightExtractorEndDate {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
-        
-         for (String file : fileColumns.keySet()) {
-            messages.append("\n").append(file + " has " + fileColumns.get(file) + " columns and " + fileMiceRows.get(file) + " treatment rows.");
-        }
-
-        System.out.println(messages.toString());
-        
     }
 
    
@@ -171,80 +153,57 @@ public class ALLTemplateWeightExtractorEndDate {
         String subType = IDChecker.getSubtype(model);
         String testing = getValue(sheet.getRow(1).getCell(1));
         String inoculationDate = getDateValue(sheet.getRow(3).getCell(1));
-         String firstTreatmentDateA = getDateValue(sheet.getRow(4).getCell(1));
-        String treatmentCompletionA = getDateValue(sheet.getRow(5).getCell(1));
-        String firstTreatmentDateB = getDateValue(sheet.getRow(6).getCell(1));
-        String treatmentCompletionB = getDateValue(sheet.getRow(7).getCell(1));
-        String firstTreatmentDateC = getDateValue(sheet.getRow(8).getCell(1));
-        String treatmentCompletionC = getDateValue(sheet.getRow(9).getCell(1));
-    //    String dayZero = getValue(sheet.getRow(5).getCell(4));
-        String randomizationDate = getDateValue(sheet.getRow(10).getCell(1));
+       
+        String dayZero = getValue(sheet.getRow(8).getCell(6));
+        String randomizationDate = getDateValue(sheet.getRow(6).getCell(1));
         
         
         
         String comment = "";
-      
-        while(!"Comment".equals(comment)){
-            comment = getValue(sheet.getRow(dateOfWeightsRow+1).getCell(endColumn++));
-            
-        }
-        fileColumns.put(fileName,endColumn+"");
+        int endColumn = 3;
+//        while(!"Comment".equals(comment)){
+//            comment = getValue(sheet.getRow(12).getCell(endColumn++));
+//            
+//        }
+//        fileColumns.put(fileName,endColumn+"");
+        endColumn = 47;
         
-        int treatmentGroupRows= miceRow;
-        String treatment = getValue(sheet.getRow(treatmentGroupRows++).getCell(0));
-        if(treatment.toLowerCase().startsWith(("control"))){
-            while(! treatment.toLowerCase().startsWith("treatment")){
-                treatment = getValue(sheet.getRow(treatmentGroupRows++).getCell(0));
-            }
-        }else{
-             messages.append("\n").append(fileName + " Header is not in normal format Control(A) is not on row " + miceRow);
-        }
+        int miceRows = 9;
+        String treatment = getValue(sheet.getRow(miceRows++).getCell(0));
+//        if(treatment.toLowerCase().startsWith(("control"))){
+//            while(! treatment.toLowerCase().startsWith("treatment")){
+//                treatment = getValue(sheet.getRow(miceRows++).getCell(0));
+//            }
+//        }else{
+//            System.out.println("Header is not in normal format Control(A) is not on row "+miceRows);
+//        }
     
-        treatmentGroupRows = treatmentGroupRows - miceRow -1; // this is terrible what is happening!
+        miceRows = 61;
         // verify
-        int treatmentGroups = 0;
-        for(int i = miceRow + treatmentGroupRows; i < 80; i = i + treatmentGroupRows){
-             treatment = getValue(sheet.getRow(i).getCell(0));
-            if (!treatment.toLowerCase().startsWith("treatment")) {
-                messages.append("\n").append(fileName + " Inconsistant mice rows expecting treatment at row " + i + " found " + treatment);
-            }
-            if (getValue(sheet.getRow(i).getCell(1)) != null) {
-                treatmentGroups++;
+        for(int i = 9; i < 80; i = i + miceRows){
+            if(! treatment.toLowerCase().startsWith("treatment")){
+     //           System.out.println("inconsistant mice rows expecting treatment at row");
             }
         }
-        fileMiceRows.put(fileName,treatmentGroups+"");
+        fileMiceRows.put(fileName,miceRows+"");
 
         int rowCount = 1;
         boolean moreTreatments = true;
         int index = 0;
         while (moreTreatments) {
 
-             int row = miceRow + (index * treatmentGroupRows);
+            int row = 9 + (index * miceRows);
 
             String armTesting = getValue(sheet.getRow(row).getCell(1));
             if (!NULL_CELL.equals(armTesting) && !armTesting.isBlank()) {
                 String arm = getValue(sheet.getRow(row).getCell(0));
+                
+                
+               
                 try{
                     arm = arm.split("\\(")[1].replace(")","");
                 }catch(Exception e){
-                     messages.append("\n").append(fileName + " can't fix treatment arm to single letter group for " + arm + " at row " + row);
-                }
-                
-                String firstTreatmentDate = "";
-                String treatmentCompletion = "";
-                if ("A".equals(arm)) {
-                    firstTreatmentDate = firstTreatmentDateA;
-                    treatmentCompletion = treatmentCompletionA;
-                }
-
-                if ("B".equals(arm)) {
-                    firstTreatmentDate = firstTreatmentDateB;
-                    treatmentCompletion = treatmentCompletionB;
-                }
-
-                if ("C".equals(arm)) {
-                    firstTreatmentDate = firstTreatmentDateC;
-                    treatmentCompletion = treatmentCompletionC;
+                    System.out.println("can't fix treatment arm to single letter group for "+arm);
                 }
                 
                 
@@ -257,18 +216,23 @@ public class ALLTemplateWeightExtractorEndDate {
 
                  
                 
-                for (int mouse = 0; mouse < treatmentGroupRows; mouse++) {
+                for (int mouse = 0; mouse < miceRows; mouse++) {
 
                     String weighDate, weight;
-                    String mouseName = getValue(sheet.getRow(row + mouse).getCell(2));
-                    comment = getValue(sheet.getRow(row+mouse).getCell(endColumn-1));
-
+                    String  mouseName = getValue(sheet.getRow(row + mouse).getCell(3));
+                    subType = IDChecker.getSubtype(mouseName);
+                    model = mouseName;
+                    comment = "";//getValue(sheet.getRow(row+mouse).getCell(endColumn-1));
+                    dayZero = getDateValue(sheet.getRow(row+mouse).getCell(2));
+                    
+                     String firstTreatmentDate = dayZero;
+                     String treatmentCompletion = "";
                   
                     
                     if (mouseName != null && !mouseName.isBlank()) {
                         loop:
                         for (int i = 3; i < endColumn; i++) {
-                            weighDate = getDateValue(sheet.getRow(dateOfWeightsRow).getCell(i));
+                            weighDate = getDateValue(sheet.getRow(7).getCell(i));
                             weight = getValue(sheet.getRow(row + mouse).getCell(i));
                             try {
                                 
@@ -289,7 +253,7 @@ public class ALLTemplateWeightExtractorEndDate {
                                 dataRow.append(treatmentCompletion).append("\t");
                                 dataRow.append(randomizationDate).append("\t");
                                 dataRow.append("").append("\t");
-                                dataRow.append("").append("\t");
+                                dataRow.append(dayZero).append("\t");
                                 dataRow.append(arm).append("\t");
                                 dataRow.append(armTesting).append("\t");
                                 dataRow.append(mouseName).append("\t");
@@ -297,8 +261,6 @@ public class ALLTemplateWeightExtractorEndDate {
                                 dataRow.append(weight).append("\t");
                                 dataRow.append("").append("\t");
                                 dataRow.append(comment).append("\t");
-                                
-                                // not sure these are ever used
                                 dataRow.append("").append("\t");
                                 dataRow.append(n).append("\t");
                                 dataRow.append(thyLym).append("\t");

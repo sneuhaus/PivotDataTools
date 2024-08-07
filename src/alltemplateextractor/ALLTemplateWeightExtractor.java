@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import modelidentifier.IDChecker;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -36,13 +37,13 @@ public class ALLTemplateWeightExtractor {
     
     static Date BEFORE, AFTER;
 
-    static final String BEFORE_DATE = "01/01/2022";
+    static final String BEFORE_DATE = "01/01/2025";
     static final String AFTER_DATE = "01/01/2015";
 
     static final String NULL_CELL = "null cell";
 
     static final String[] columnNames = {"record_id", "record_description","associated_all_project", "panel_code",
-        "tumor", "tumor_category", "testing", 
+        "model", "subtype", "testing", 
         "all_dose", "all_schedule", "date_of_innoculation", "date_of_first_treatment",
         "date_of_treatment_completion", "date_of_randomization", "description", 
         "day_0", "arm", "arm_testing", "all_mouse", "date_of_weight", 
@@ -66,7 +67,7 @@ public class ALLTemplateWeightExtractor {
             BEFORE = sdfOut.parse(BEFORE_DATE);
             AFTER = sdfOut.parse(AFTER_DATE);
 
-            File myFile = new File("C://PIVOTData/2005/CCIA");
+            File myFile = new File("C://PIVOTData/1704/CCIA/");
             //         File myFile = new File("C://1816/raw");
 
             for (String column : columnNames) {
@@ -148,12 +149,12 @@ public class ALLTemplateWeightExtractor {
         Sheet sheet = workBook.getSheetAt(1);
         String panelCode = getValue(sheet.getRow(0).getCell(1));
         String model = getValue(sheet.getRow(2).getCell(1));
-        String subType = TumorToSubtype.getSubType(model);
+        String subType = IDChecker.getSubtype(model);
         String testing = getValue(sheet.getRow(1).getCell(1));
         String inoculationDate = getDateValue(sheet.getRow(3).getCell(1));
         String firstTreatmentDate = getDateValue(sheet.getRow(4).getCell(1));
         String treatmentCompletion = getDateValue(sheet.getRow(5).getCell(1));
-        String dayZero = getValue(sheet.getRow(5).getCell(4));
+        String dayZero = getValue(sheet.getRow(8).getCell(6));
         String randomizationDate = getDateValue(sheet.getRow(6).getCell(1));
         
         
@@ -161,24 +162,24 @@ public class ALLTemplateWeightExtractor {
         String comment = "";
         int endColumn = 3;
         while(!"Comment".equals(comment)){
-            comment = getValue(sheet.getRow(8).getCell(endColumn++));
+            comment = getValue(sheet.getRow(12).getCell(endColumn++));
             
         }
         fileColumns.put(fileName,endColumn+"");
         
-         int miceRows = 9;
+         int miceRows = 13;
         String treatment = getValue(sheet.getRow(miceRows++).getCell(0));
         if(treatment.toLowerCase().startsWith(("control"))){
             while(! treatment.toLowerCase().startsWith("treatment")){
                 treatment = getValue(sheet.getRow(miceRows++).getCell(0));
             }
         }else{
-            System.out.println("Header is not in normal format Control(A) is not on row 10");
+            System.out.println("Header is not in normal format Control(A) is not on row "+miceRows);
         }
     
-        miceRows = miceRows -10;
+        miceRows = 11;
         // verify
-        for(int i = 9; i < 80; i = i + miceRows){
+        for(int i = 13; i < 80; i = i + miceRows){
             if(! treatment.toLowerCase().startsWith("treatment")){
                 System.out.println("inconsistant mice rows expecting treatment at row");
             }
@@ -190,7 +191,7 @@ public class ALLTemplateWeightExtractor {
         int index = 0;
         while (moreTreatments) {
 
-            int row = 9 + (index * miceRows);
+            int row = 13 + (index * miceRows);
 
             String armTesting = getValue(sheet.getRow(row).getCell(1));
             if (!NULL_CELL.equals(armTesting) && !armTesting.isBlank()) {
@@ -225,7 +226,7 @@ public class ALLTemplateWeightExtractor {
                     if (mouseName != null && !mouseName.isBlank()) {
                         loop:
                         for (int i = 3; i < endColumn; i++) {
-                            weighDate = getDateValue(sheet.getRow(7).getCell(i));
+                            weighDate = getDateValue(sheet.getRow(11).getCell(i));
                             weight = getValue(sheet.getRow(row + mouse).getCell(i));
                             try {
                                 
